@@ -1,4 +1,12 @@
----
+# ---------------------------------------------------------------------------
+# Kustomization: cluster-apps
+# ---------------------------------------------------------------------------
+# This Kustomization is responsible for reconciling *all your applications*
+# under kubernetes/apps. Every folder that contains a kustomization.yaml or a
+# Flux Kustomization is handled automatically by Flux.
+#
+# This is your existing config, with no logic changed.
+# ---------------------------------------------------------------------------
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
@@ -55,3 +63,32 @@ spec:
       target:
         group: kustomize.toolkit.fluxcd.io
         kind: Kustomization
+
+---
+
+# ---------------------------------------------------------------------------
+# Kustomization: flux-sources
+# ---------------------------------------------------------------------------
+# This NEW Kustomization tells Flux to reconcile HelmRepositories and other
+# sources defined under:  ./kubernetes/flux/sources
+#
+# Without this block, Flux does NOT load your longhorn HelmRepository, which is
+# why you saw the error:
+#   “HelmRepository longhorn not found”
+#
+# This is the only missing wiring needed for Longhorn (and any other chart repo).
+# ---------------------------------------------------------------------------
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: flux-sources
+  namespace: flux-system
+spec:
+  interval: 10m
+  path: ./kubernetes/flux/sources
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+    namespace: flux-system
+  wait: false
